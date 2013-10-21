@@ -1,0 +1,109 @@
+apply from: 'libraries.gradle'
+
+allprojects {
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    apply plugin: 'maven'
+
+    group = 'org.jpos.ee'
+    version = '2.0.1-SNAPSHOT'
+}
+
+subprojects {
+    apply plugin: 'java'
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+    [ compileJava, compileTestJava, javadoc ]*.options*.encoding = 'UTF-8'
+
+    tasks.withType(Compile) {
+        options.warnings = false
+    }
+
+    project.archivesBaseName="jposee-${project.name}"
+
+    def pomConfig = {
+        name 'jPOS-EE Project'
+        description """
+    jPOS Extended Edition
+  """
+        url 'http://jpos.org'
+        inceptionYear '1998'
+        organization {
+            name 'jPOS.org'
+            url 'http://jpos.org'
+        }
+        issueManagement {
+            system 'YouTrack'
+            url 'https://jpos.org/issues'
+        }
+        scm {
+            url "http://github.com/jpos/jPOS"
+            connection "scm:git:https://github.com/jpos/jPOS-EE.git"
+            developerConnection "scm:git:git@github.com:jpos/jPOS-EE.git"
+        }
+        licenses {
+            license {
+                name 'GNU AFFERO GENERAL PUBLIC LICENSE'
+                url 'http://www.gnu.org/licenses/agpl-v3.html'
+                comments 'See http://jpos.org/license for more details.'
+                distribution 'repo'
+            }
+        }
+        developers {
+            developer {
+                id 'jpos-team'
+                name 'jPOS Development Team'
+                email 'info@jpos.org'
+            }
+        }
+    }
+
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                pom.project pomConfig
+                repository(url: 'file:///opt/local/maven')
+            }
+        }
+    }
+    task sourceJar(type: Jar) {
+        from sourceSets.main.allSource
+        classifier = 'sources'
+    }
+
+    artifacts {
+        archives sourceJar
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        mavenRepo url: "http://jpos.org/maven"
+        mavenRepo url: "http://download.oracle.com/maven"
+        mavenRepo url: "http://jline.sourceforge.net/m2repo"
+        mavenRepo url: "https://repository.jboss.org/nexus/content/repositories/releases"
+        mavenRepo url: "http://repository.atlassian.com/maven2"
+    }
+
+    dependencies {
+        testCompile libraries.junit
+    }
+}
+task allSources(type: Jar,dependsOn: subprojects.assemble) {
+    baseName = 'jposee-sources'
+    from subprojects.collect { project ->
+        project.sourceSets.main.allSource
+    }
+}
+
+task wrapper( type: Wrapper ) {
+    gradleVersion = '1.6'
+}
+
+// Configure IDEA to use Git
+idea.project.ipr {
+  withXml { provider ->
+    provider.node.component.find { it.@name == 'VcsDirectoryMappings' }.mapping.@vcs = 'Git'
+  }
+}
+

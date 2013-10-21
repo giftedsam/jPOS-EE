@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2012 Alejandro P. Revilla
+ * Copyright (C) 2000-2013 Alejandro P. Revilla
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -34,6 +34,11 @@ public class SysConfigManager {
         super();
         this.db = db;
     }
+    public SysConfigManager (DB db, String prefix) {
+        super();
+        this.db = db;
+        this.prefix = prefix;
+    }
     public void setPrefix (String prefix) {
         this.prefix = prefix;
     }
@@ -54,40 +59,69 @@ public class SysConfigManager {
         }
         return false;
     }
+
+    /**
+     * @param name property name
+     * @param defaultValue default value
+     * @return if property exists, return its value, otherwise defaultValue.
+     */
     public String get (String name, String defaultValue) {
         try {
             if (prefix != null)
                 name = prefix + name;
-            SysConfig cfg = (SysConfig) db.session().load (SysConfig.class, name);
-            return cfg.getValue();
-        } catch (ObjectNotFoundException e) {
-            // okay to happen
+            SysConfig cfg = (SysConfig) db.session().get (SysConfig.class, name);
+            if (cfg != null)
+                return cfg.getValue();
         } catch (HibernateException e) {
             db.getLog().warn (e);
         }
         return defaultValue;
     }
-    public String[] getAll  (String name) {
-        String[] values;
+    public SysConfig[] getAll  (String queryString) {
+        SysConfig[] values;
         try {
             if (prefix != null)
-                name = prefix + name;
+                queryString = prefix + queryString;
             Query query = db.session().createQuery (
-                "from sysconfig in class org.jpos.ee.SysConfig where id like :name order by id"
+                "from sysconfig in class org.jpos.ee.SysConfig where id like :queryString order by id"
             );
-            query.setParameter ("name", name);
+            query.setParameter ("queryString", queryString);
             List l = query.list();
-            values = new String[l.size()];
+            values = new SysConfig[l.size()];
             Iterator iter = l.iterator();
             for (int i=0; iter.hasNext(); i++) {
-                values[i] = (String) iter.next();
+                values[i] = (SysConfig) iter.next();
             }
         } catch (HibernateException e) {
             db.getLog().warn (e);
-            values = new String[0];
+            values = new SysConfig[0];
         }
         return values;
     }
+    public SysConfig[] getAll () {
+        SysConfig[] values;
+        try {
+            String queryAsString = "from sysconfig in class org.jpos.ee.SysConfig";
+            if (prefix != null)
+                queryAsString += " where id like :query";
+            Query query = db.session().createQuery (queryAsString + " order by id");
+            if (prefix != null)
+                query.setParameter ("query", prefix + "%");
+            List l = query.list();
+            values = new SysConfig[l.size()];
+            Iterator iter = l.iterator();
+            for (int i=0; iter.hasNext(); i++) {
+                values[i] = (SysConfig) iter.next();
+            }
+        } catch (HibernateException e) {
+            db.getLog().warn (e);
+            values = new SysConfig[0];
+        }
+        return values;
+    }
+
+
+
     @SuppressWarnings("unchecked")
     public Iterator<SysConfig> iterator() {
         Query query;

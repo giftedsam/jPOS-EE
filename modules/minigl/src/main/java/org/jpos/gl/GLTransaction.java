@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2012 Alejandro P. Revilla
+ * Copyright (C) 2000-2013 Alejandro P. Revilla
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -326,7 +326,7 @@ public class GLTransaction {
             elem.addContent (detail);
         }
         if (getTags () != null) {
-            Element tags = new Element ("tags").setText (getDetail());
+            Element tags = new Element ("tags").setText (getTags());
             elem.addContent (tags);
         }
         elem.setAttribute ("journal", getJournal().getName());

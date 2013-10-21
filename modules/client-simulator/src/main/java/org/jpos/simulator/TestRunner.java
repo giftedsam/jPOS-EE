@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2012 Alejandro P. Revilla
+ * Copyright (C) 2000-2013 Alejandro P. Revilla
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -208,11 +208,17 @@ public class TestRunner
                     {
                         bsh.set  ("value", m.getString (i));
                         Object ret = bsh.eval (value.substring (1));
-                        if (ret instanceof Boolean)
-                            if (!((Boolean) ret).booleanValue()) {
+                        if (ret instanceof Boolean) {
+                            if (!(Boolean) ret) {
                                 evt.addMessage("field", "[" + i+ "] Boolean eval returned false");
                                 //return false;
                             }
+                        } else if (ret instanceof String) {
+                            if (m.hasField(i) && !ret.equals(m.getString(i))) {
+                                evt.addMessage("field", "[" + i + "] Received:[" + m.getString(i) + "]" + " Expected:["
+                                    + ret + "]");
+                            }
+                        }
                         m.unset (i);
                         expected.unset (i);
                     }

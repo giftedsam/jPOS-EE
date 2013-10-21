@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2012 Alejandro P. Revilla
+ * Copyright (C) 2000-2013 Alejandro P. Revilla
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -127,13 +127,34 @@ public class UserManager {
         assertNotNull (password, "Password is null");
         return password.equals (getHash(u.getId(), clearpass));
     }
+    /**
+     * @param u the user
+     * @param clearpass new password in clear
+     * @return true if password is in PasswordHistory
+     */
+    public boolean checkNewPassword (User u, String clearpass) {
+        String newHash = getHash(u.getId(), clearpass);
+        if (newHash.equals(u.getPassword()))
+            return false;
+        for (PasswordHistory p : (List<PasswordHistory>)u.getPasswordhistory()) {
+            if (p.getValue().equals(newHash))
+                return false;
+        }
+        return true;
+    }
 
-    public void setPassword (User u, String clearpass) {
+    public void setPassword (User u, String clearpass){
+        setPassword(u, clearpass, null);
+    }
+
+    public void setPassword (User u, String clearpass, User author){
         if (u.getPassword() != null)
             u.addPasswordHistoryValue(u.getPassword());
         u.setPassword (getHash (u.getId(), clearpass));
         RevisionManager revmgr = new RevisionManager(db);
-        revmgr.createRevision(u, "user." + u.getId(), "Password changed");
+        if (author == null)
+            author = u;
+        revmgr.createRevision (author, "user." + u.getId(), "Password changed");
         session.saveOrUpdate(u);
     }
     /**
